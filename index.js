@@ -1,14 +1,23 @@
-const fs = requrie("fs");
-const readline = require("readline-sync");
-const chalk = require("chalk");
+import * as fs from "fs";
+import * as readline from "readline-sync";
+import chalk from "chalk";
 
 const filePath = "./tasks.json";
 
 const loadTasks = () => {
-  if (fs.existsSync(filePath)) {
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, "utf8");
+      const tasks = JSON.parse(data);
+      return Array.isArray(tasks) ? tasks : [];
+    }
+
+    fs.writeFileSync(filePath, "[]");
+    return [];
+  } catch (error) {
+    console.error("Error loading tasks:", error);
+    return [];
   }
-  return [];
 };
 
 const saveTasks = (tasks) => {
@@ -49,6 +58,29 @@ const markCompleted = () => {
   }
 };
 
+const editTask = () => {
+  listTasks();
+  const taskIndex = readline.questionInt("Enter the task number to edit: ") - 1;
+
+  if (tasks[taskIndex]) {
+    const currentTask = tasks[taskIndex];
+    console.log(chalk.yellow(`Current task: ${currentTask.description}`));
+    const newDescription = readline.question(
+      "Enter new task description (press Enter to keep current): ",
+    );
+
+    if (newDescription.trim()) {
+      tasks[taskIndex].description = newDescription;
+      saveTasks(tasks);
+      console.log(chalk.green("Task edited successfully!"));
+    } else {
+      console.log(chalk.yellow("Task remained unchanged."));
+    }
+  } else {
+    console.log(challk.red("Invalid task number."));
+  }
+};
+
 const deleteTask = () => {
   listTasks();
   const taskIndex =
@@ -69,7 +101,8 @@ const showMenu = () => {
   console.log("2. List Tasks");
   console.log("3. Mark Task as Completed");
   console.log("4. Delete a Task");
-  console.log("5. Exit");
+  console.log("5. Edit Task");
+  console.log("6. Exit");
 };
 
 const run = () => {
@@ -93,6 +126,9 @@ const run = () => {
         deleteTask();
         break;
       case 5:
+        editTask();
+        break;
+      case 6:
         console.log(chalk.blue("Goodbye!"));
         exit = true;
         break;
